@@ -21,7 +21,7 @@ public class EmployeeRepository {
 }
 
 public List<Employee> getEmps(){
-	List<Employee> aliens=new ArrayList<>();
+	List<Employee> emp=new ArrayList<>();
 	String sql="select * from employee";
 	try{
 		Statement st = con.createStatement();
@@ -31,7 +31,7 @@ public List<Employee> getEmps(){
 			a.setId(rs.getInt(1));
 			a.setName(rs.getString(2));
 			a.setPoints(rs.getInt(3));
-			aliens.add(a);
+			emp.add(a);
 		}
 		
 		
