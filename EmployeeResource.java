@@ -3,6 +3,7 @@ package com.Jerseyy;
 
 import java.util.List;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -36,6 +37,7 @@ public Employee getEmployee1(@PathParam("id") int id){
 @POST
 @Path("emp")
 @Produces(MediaType.APPLICATION_XML)
+@Consumes(MediaType.APPLICATION_XML)
 public Employee createEmployee(Employee a1){
 	boolean val=false;
 	val=repo.create(a1);
@@ -48,6 +50,8 @@ public Employee createEmployee(Employee a1){
 @PUT
 @Path("emp")
 @Produces(MediaType.APPLICATION_XML)
+@Consumes(MediaType.APPLICATION_XML)
+
 public Employee updateEmployee(Employee a1){
 	boolean val1=false;
 	val1=repo.update(a1);
@@ -59,20 +63,15 @@ public Employee updateEmployee(Employee a1){
 }
 @DELETE
 @Path("emp/{id}")
-@Produces(MediaType.APPLICATION_XML)
-public Employee delEmployee(@PathParam("id") int id){
+
+public boolean delEmployee(@PathParam("id") int id){
 	boolean val=false;
-	Employee a=repo.getEmployee(id);
-	if(a.getId()!=0){
+	
 		
 		val=repo.delete(id);
-		if(val)
-		return a;
-	
-	else 
-		return null;
-}
-	else return null;
-}
+		
+	return val;
 
+
+}
 }
