@@ -1,165 +1,172 @@
 package com.Jerseyy;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
 public class EmployeeRepository {
-	
-	Connection con=null;
-	public Connection getConnect(){
-	String url="jdbc:mysql://localhost:3306/employee";
-	String user="root";
-	String pass="";
-	try{
-		Class.forName("com.mysql.jdbc.Driver");  
-		con=DriverManager.getConnection(url,user,pass);
-		
-	}
-	catch(Exception e){
-		System.out.println(e);
-	}
-	return con;
-}
+	public Connection getConnect() {
+		Connection con = null;
 
-public List<Employee> getEmps(){
-	List<Employee> emp=new ArrayList<>();
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+			con = DriverManager.getConnection(
+					"jdbc:mysql://localhost:3306/employee", "root", "");
 
-String sql="select eid,name,dept,mobile_no,mail_id,address from employee inner join personal_emp"
-	+ " on employee.eid=personal_emp.id";
-	try (Statement st = getConnect().createStatement();
-		ResultSet rs=st.executeQuery(sql);){
-		while(rs.next()){
-			Employee a=new Employee();
-			a.setId(rs.getInt("eid"));
-			a.setName(rs.getString("name"));
-			a.setDept(rs.getString("dept"));
-			a.setMobileNo(rs.getString("mobile_no"));
-			a.setMailId(rs.getString("mail_id"));
-			a.setAddress(rs.getString("address"));
-			emp.add(a);
+		} catch (Exception ex) {
+			System.out.println(ex);
 		}
-		
-		
+		return con;
 	}
-	catch(Exception e){
-		System.out.println(e);
-	}
-	return emp;
-	
-}
-public Employee getEmployee(int id){
-	String sql="select eid,name,dept,mobile_no,mail_id,address from employee inner join personal_emp"
-	+ " on employee.eid=personal_emp.id="+id ;
-	Employee a=new Employee();
-	try(Statement st = getConnect().createStatement();
-		ResultSet rs=st.executeQuery(sql);){
-		if(rs.next()){
-			a.setId(rs.getInt("eid"));
-			a.setName(rs.getString("name"));
-			a.setDept(rs.getString("dept"));
-			a.setMobileNo(rs.getString("mobile_no"));
-			a.setMailId(rs.getString("mail_id"));
-			a.setAddress(rs.getString("address"));
-			
-			
+
+	public List<Employee> getEmployeeList() {
+		List<Employee> employee_list = new ArrayList<>();
+
+		String sql = "select id,name,department,mobile_no,mail_id,address from employee inner join employee_personal_details"
+				+ " on employee.id=employee_personal_details.eid";
+		try (Connection con = getConnect();
+				Statement st = con.createStatement();
+				ResultSet rs = st.executeQuery(sql);) {
+			while (rs.next()) {
+				Employee employee = new Employee();
+				employee.setId(rs.getInt("id"));
+				employee.setName(rs.getString("name"));
+				employee.setDept(rs.getString("department"));
+				employee.setMobileNo(rs.getString("mobile_no"));
+				employee.setMailId(rs.getString("mail_id"));
+				employee.setAddress(rs.getString("address"));
+				employee_list.add(employee);
+			}
+
+		} catch (Exception ex) {
+			System.out.println(ex);
 		}
-		
-		
-	}
-	catch(Exception e){
-		System.out.println(e);
-	}
-return a;
-}
+		return employee_list;
 
-public boolean create(Employee a1) {
-	String sql="insert into employee(name,dept)values(?,?)";
-	String sql1="insert into personal_emp(id,mobile_no,mail_id,address)values(?,?,?,?)";
-	int i=0,i1=0,id1=0;
-	boolean j=false;
-	try (PreparedStatement st= getConnect().prepareStatement(sql,Statement.RETURN_GENERATED_KEYS);){
-		st.setString(1,a1.getName());
-		st.setString(2,a1.getDept());
-		 i=st.executeUpdate();
-		 try(ResultSet rs=st.getGeneratedKeys();){
-		if(rs.next()){
-			id1=rs.getInt(1);
-			System.out.println(id1);
+	}
+
+	public Employee getEmployee(int id) {
+		Employee employee = new Employee();
+		String sql = "select id,name,department,mobile_no,mail_id,address from employee inner join employee_personal_details"
+				+ " on employee.id=employee_personal_details.eid where employee.id=?";
+		try (Connection con = getConnect();
+				PreparedStatement ps = con.prepareStatement(sql);) {
+			ps.setInt(1, id);
+			try (ResultSet rs = ps.executeQuery();) {
+				if (rs.next()) {
+					employee.setId(rs.getInt("id"));
+					employee.setName(rs.getString("name"));
+
+					employee.setDept(rs.getString("department"));
+					employee.setMobileNo(rs.getString("mobile_no"));
+					employee.setMailId(rs.getString("mail_id"));
+					employee.setAddress(rs.getString("address"));
+
+				}
+			}
+		} catch (Exception ex) {
+			System.out.println(ex);
 		}
-		try( PreparedStatement st1=getConnect().prepareStatement(sql1);){
-		 st1.setInt(1, id1);
-		 st1.setString(2,a1.getMobileNo());
-		 st1.setString(3,a1.getMailId());
-		 st1.setString(4,a1.getAddress());
-		 i1=st1.executeUpdate();
-		j= (i>0 && i1>0);
-		
+		return employee;
+	}
+
+	public void insert(Employee employee) {
+		int id = 0;
+
+		try (Connection con = getConnect();) {
+			con.setAutoCommit(false);
+			String sql = "insert into employee(name,department)values(?,?)";
+			try (PreparedStatement ps1 = con.prepareStatement(sql,
+					Statement.RETURN_GENERATED_KEYS);) {
+				ps1.setString(1, employee.getName());
+				ps1.setString(2, employee.getDept());
+				ps1.executeUpdate();
+				try (ResultSet rs = ps1.getGeneratedKeys();) {
+					if (rs.next()) {
+						id = rs.getInt(1);
+						System.out.println(id);
+					}
+				}
+			}
+			String sql1 = "insert into employee_personal_details(eid,mobile_no,mail_id,address)values(?,?,?,?)";
+			try (PreparedStatement ps2 = con.prepareStatement(sql1);) {
+				ps2.setInt(1, id);
+				ps2.setString(2, employee.getMobileNo());
+				ps2.setString(3, employee.getMailId());
+				ps2.setString(4, employee.getAddress());
+				ps2.executeUpdate();
+
+			}
+			try {
+				con.commit();
+			} catch (Exception ex) {
+				con.rollback();
+				System.out.println(ex);
+			}
+
+		} catch (Exception ex) {
+
+			System.out.println(ex);
 		}
-		catch(Exception e){
-			System.out.println(e);
+
+	}
+
+	public void update(Employee employee) {
+		String sql = "update employee set name=?,department=? where id=?";
+		try (Connection con = getConnect();
+				PreparedStatement ps1 = con.prepareStatement(sql);) {
+			con.setAutoCommit(false);
+			ps1.setString(1, employee.getName());
+			ps1.setString(2, employee.getDept());
+			ps1.setInt(3, employee.getId());
+			ps1.executeUpdate();
+			String sql1 = "update employee_personal_details set mobile_no=?,mail_id=?,address=? where eid=?";
+			try (PreparedStatement ps2 = con.prepareStatement(sql1);) {
+				ps2.setString(1, employee.getMobileNo());
+				ps2.setString(2, employee.getMailId());
+				ps2.setString(3, employee.getAddress());
+				ps2.setInt(4, employee.getId());
+				ps2.executeUpdate();
+			}
+			try {
+				con.commit();
+			} catch (Exception ex) {
+				con.rollback();
+				System.out.println(ex);
+			}
+
+		} catch (Exception ex) {
+			System.out.println(ex);
 		}
-
-		
-	}
-	catch(Exception e){
-		System.out.println(e);
-	}
-	}
-	catch(Exception e){
-		System.out.println(e);
 	}
 
-	return j;
-}
-public boolean update(Employee a1) {
-	String sql="update employee set name=?,dept=? where eid=?";
-	String sql1="update personal_emp set mobile_no=?,mail_id=?,address=? where id=?";
-	int i=0,i1=0;
-	boolean j=false;
-	try (PreparedStatement st= getConnect().prepareStatement(sql);
-			 PreparedStatement st1=getConnect().prepareStatement(sql1);){
-		st.setString(1,a1.getName());
-		st.setString(2,a1.getDept());
-		st.setInt(3,a1.getId());
-		 i=st.executeUpdate();
-		 st1.setString(1,a1.getMobileNo());
-		 st1.setString(2,a1.getMailId());
-		 st1.setString(3,a1.getAddress());
-		 st1.setInt(4,a1.getId());
-		 i1=st1.executeUpdate();
-		j= (i>0 && i1>0);
-		
-		
+	public void delete(int id) {
+		String sql = "delete from employee_personal_details where eid=?";
+		try (Connection con = getConnect();
+				PreparedStatement ps1 = con.prepareStatement(sql);) {
+			con.setAutoCommit(false);
+			ps1.setInt(1, id);
+			ps1.executeUpdate();
+			String sql1 = "delete from employee where id=?";
+
+			try (PreparedStatement ps2 = con.prepareStatement(sql1);) {
+				ps2.setInt(1, id);
+				ps2.executeUpdate();
+
+			}
+			try {
+				con.commit();
+			} catch (Exception ex) {
+				con.rollback();
+				System.out.println(ex);
+			}
+		} catch (Exception ex) {
+			System.out.println(ex);
+		}
 	}
-	catch(Exception e){
-		System.out.println(e);
-	}
-
-	return j;
-}
-
-
-
-public boolean delete(int id) {
-	String sql="delete from employee where eid=?";
-	String sql1="delete from personal_emp where id=?";
-	int i=0,i1=0;
-	boolean j=false;
-	try (PreparedStatement st=getConnect().prepareStatement(sql);
-			PreparedStatement st1=getConnect().prepareStatement(sql1);){
-	    st.setInt(1,id);
-		i=st.executeUpdate();
-	    st1.setInt(1,id);
-		i=st1.executeUpdate();
-		
-		j=(i>0 && i1>0);
-				
-	}
-	catch(Exception e){
-		System.out.println(e);
-	}	
-	return j;
-}
 
 }
