@@ -1,8 +1,5 @@
 package com.Jerseyy;
-
-
 import java.util.List;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -15,63 +12,49 @@ import javax.ws.rs.core.MediaType;
 
 @Path("employees")
 public class EmployeeResource {
-	EmployeeRepository repo=new EmployeeRepository();
+	EmployeeRepository repo = new EmployeeRepository();
+
 	@GET
 	@Produces(MediaType.APPLICATION_XML)
-	
-public List<Employee> getEmpl(){
-	return repo.getEmps();
-	
-}
-	
+	public List<Employee> getEmployees() {
+		return repo.getEmployeeList();
+
+	}
+
 	@GET
 	@Path("emp/{id}")
 	@Produces(MediaType.APPLICATION_XML)
-	
-public Employee getEmployee1(@PathParam("id") int id){
-	
-	return repo.getEmployee(id);
-	
-}
+	public Employee getOneEmployee(@PathParam("id") int id) {
 
-@POST
-@Path("emp")
-@Produces(MediaType.APPLICATION_XML)
-@Consumes(MediaType.APPLICATION_XML)
-public Employee createEmployee(Employee a1){
-	boolean val=false;
-	val=repo.create(a1);
-	if(val)
-	return a1;
-	else 
-		return null;
-	
-}
-@PUT
-@Path("emp")
-@Produces(MediaType.APPLICATION_XML)
-@Consumes(MediaType.APPLICATION_XML)
+		return repo.getEmployee(id);
 
-public Employee updateEmployee(Employee a1){
-	boolean val1=false;
-	val1=repo.update(a1);
-	if(val1)
-	return a1;
-	else 
-		return null;
-	
-}
-@DELETE
-@Path("emp/{id}")
+	}
 
-public boolean delEmployee(@PathParam("id") int id){
-	boolean val=false;
-	
-		
-		val=repo.delete(id);
-		
-	return val;
+	@POST
+	@Path("emp")
+	@Produces(MediaType.APPLICATION_XML)
+	@Consumes(MediaType.APPLICATION_XML)
+	public Employee createEmployee(Employee employee) {
+		repo.insert(employee);
+		return employee;
+	}
 
+	@PUT
+	@Path("emp")
+	@Produces(MediaType.APPLICATION_XML)
+	@Consumes(MediaType.APPLICATION_XML)
+	public Employee updateEmployee(Employee a1) {
+		repo.update(a1);
+		return a1;
+	}
 
-}
+	@DELETE
+	@Path("emp/{id}")
+	@Produces(MediaType.TEXT_HTML)
+	public String delEmployee(@PathParam("id") int id) {
+		repo.delete(id);
+		String output = "<p>Deleted</p>";
+		return output;
+
+	}
 }
