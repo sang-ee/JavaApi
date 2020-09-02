@@ -20,11 +20,14 @@ public class EmployeeRepository {
 		} catch (Exception ex) {
 			System.out.println(ex);
 		}
+		if (con == null)
+			throw new NullPointerException(
+					"Connection object reference is null");
 		return con;
 	}
 
 	public List<Employee> getEmployeeList() {
-		List<Employee> employee_list = new ArrayList<>();
+		List<Employee> employeeList = new ArrayList<>();
 
 		String sql = "select id,name,department,mobile_no,mail_id,address from employee inner join employee_personal_details"
 				+ " on employee.id=employee_personal_details.eid";
@@ -39,20 +42,20 @@ public class EmployeeRepository {
 				employee.setMobileNo(rs.getString("mobile_no"));
 				employee.setMailId(rs.getString("mail_id"));
 				employee.setAddress(rs.getString("address"));
-				employee_list.add(employee);
+				employeeList.add(employee);
 			}
 
 		} catch (Exception ex) {
 			System.out.println(ex);
 		}
-		return employee_list;
+		return employeeList;
 
 	}
 
 	public Employee getEmployee(int id) {
 		Employee employee = new Employee();
 		String sql = "select id,name,department,mobile_no,mail_id,address from employee inner join employee_personal_details"
-				+ " on employee.id=employee_personal_details.eid where employee.id=?";
+				+ " on employee.id=employee_personal_details.eid where id=?";
 		try (Connection con = getConnect();
 				PreparedStatement ps = con.prepareStatement(sql);) {
 			ps.setInt(1, id);
@@ -79,60 +82,71 @@ public class EmployeeRepository {
 
 		try (Connection con = getConnect();) {
 			con.setAutoCommit(false);
-			String sql = "insert into employee(name,department)values(?,?)";
-			try (PreparedStatement ps1 = con.prepareStatement(sql,
-					Statement.RETURN_GENERATED_KEYS);) {
-				ps1.setString(1, employee.getName());
-				ps1.setString(2, employee.getDept());
-				ps1.executeUpdate();
-				try (ResultSet rs = ps1.getGeneratedKeys();) {
-					if (rs.next()) {
-						id = rs.getInt(1);
-						System.out.println(id);
-					}
-				}
-			}
-			String sql1 = "insert into employee_personal_details(eid,mobile_no,mail_id,address)values(?,?,?,?)";
-			try (PreparedStatement ps2 = con.prepareStatement(sql1);) {
-				ps2.setInt(1, id);
-				ps2.setString(2, employee.getMobileNo());
-				ps2.setString(3, employee.getMailId());
-				ps2.setString(4, employee.getAddress());
-				ps2.executeUpdate();
-
-			}
 			try {
+				id = insertEmployee(con, employee);
+				insertEmployeePersonal(con, employee, id);
 				con.commit();
 			} catch (Exception ex) {
 				con.rollback();
-				System.out.println(ex);
 			}
 
 		} catch (Exception ex) {
 
+			System.out.println(ex);
+		}
+
+	}
+
+	public int insertEmployee(Connection con, Employee employee)
+			throws Exception {
+		int id = 0, i = 0;
+
+		String sql = "insert into employee(name,department)values(?,?)";
+		try (PreparedStatement ps1 = con.prepareStatement(sql,
+				Statement.RETURN_GENERATED_KEYS);) {
+			ps1.setString(1, employee.getName());
+			ps1.setString(2, employee.getDept());
+			i = ps1.executeUpdate();
+			try (ResultSet rs = ps1.getGeneratedKeys();) {
+				if (rs.next()) {
+					id = rs.getInt(1);
+					System.out.println(id);
+				}
+			}
+		} catch (Exception ex) {
+			if (i == 0)
+				throw new Exception("Method insertEmployee() failed");
+			System.out.println(ex);
+		}
+		return id;
+	}
+
+	public void insertEmployeePersonal(Connection con, Employee employee, int id)
+			throws Exception {
+		int i = 0;
+		String sql1 = "insert into employee_personal_details(eid,mobile_no,mail_id,address)"
+				+ "values(?,?,?,?)";
+		try (PreparedStatement ps2 = con.prepareStatement(sql1);) {
+			ps2.setInt(1, id);
+			ps2.setString(2, employee.getMobileNo());
+			ps2.setString(3, employee.getMailId());
+			ps2.setString(4, employee.getAddress());
+			i = ps2.executeUpdate();
+		} catch (Exception ex) {
+			if (i == 0)
+				throw new Exception("Method insertEmployeePersonal() failed");
 			System.out.println(ex);
 		}
 
 	}
 
 	public void update(Employee employee) {
-		String sql = "update employee set name=?,department=? where id=?";
-		try (Connection con = getConnect();
-				PreparedStatement ps1 = con.prepareStatement(sql);) {
+		try (Connection con = getConnect();) {
 			con.setAutoCommit(false);
-			ps1.setString(1, employee.getName());
-			ps1.setString(2, employee.getDept());
-			ps1.setInt(3, employee.getId());
-			ps1.executeUpdate();
-			String sql1 = "update employee_personal_details set mobile_no=?,mail_id=?,address=? where eid=?";
-			try (PreparedStatement ps2 = con.prepareStatement(sql1);) {
-				ps2.setString(1, employee.getMobileNo());
-				ps2.setString(2, employee.getMailId());
-				ps2.setString(3, employee.getAddress());
-				ps2.setInt(4, employee.getId());
-				ps2.executeUpdate();
-			}
+
 			try {
+				updateEmployee(con, employee);
+				updateEmployeePersonal(con, employee);
 				con.commit();
 			} catch (Exception ex) {
 				con.rollback();
@@ -140,25 +154,52 @@ public class EmployeeRepository {
 			}
 
 		} catch (Exception ex) {
+			System.out.println(ex);
+		}
+	}
+
+	public void updateEmployee(Connection con, Employee employee)
+			throws Exception {
+		int i = 0;
+		String sql = "update employee set name=?,department=? where id=?";
+		try (PreparedStatement ps1 = con.prepareStatement(sql);) {
+			con.setAutoCommit(false);
+			ps1.setString(1, employee.getName());
+			ps1.setString(2, employee.getDept());
+			ps1.setInt(3, employee.getId());
+			i = ps1.executeUpdate();
+		} catch (Exception ex) {
+			if (i == 0)
+				throw new Exception("Method updateEmployee() failed");
+			System.out.println(ex);
+		}
+
+	}
+
+	public void updateEmployeePersonal(Connection con, Employee employee)
+			throws Exception {
+		int i = 0;
+		String sql1 = "update employee_personal_details set mobile_no=?,mail_id=?,address=? where eid=?";
+		try (PreparedStatement ps2 = con.prepareStatement(sql1);) {
+			ps2.setString(1, employee.getMobileNo());
+			ps2.setString(2, employee.getMailId());
+			ps2.setString(3, employee.getAddress());
+			ps2.setInt(4, employee.getId());
+			i = ps2.executeUpdate();
+		} catch (Exception ex) {
+			if (i == 0)
+				throw new Exception("Method updateEmployeePersonal() failed");
 			System.out.println(ex);
 		}
 	}
 
 	public void delete(int id) {
-		String sql = "delete from employee_personal_details where eid=?";
-		try (Connection con = getConnect();
-				PreparedStatement ps1 = con.prepareStatement(sql);) {
+		try (Connection con = getConnect();) {
 			con.setAutoCommit(false);
-			ps1.setInt(1, id);
-			ps1.executeUpdate();
-			String sql1 = "delete from employee where id=?";
 
-			try (PreparedStatement ps2 = con.prepareStatement(sql1);) {
-				ps2.setInt(1, id);
-				ps2.executeUpdate();
-
-			}
 			try {
+				deleteEmployeePersonal(con, id);
+				deleteEmployee(con, id);
 				con.commit();
 			} catch (Exception ex) {
 				con.rollback();
@@ -169,4 +210,33 @@ public class EmployeeRepository {
 		}
 	}
 
+	public void deleteEmployee(Connection con, int id) throws Exception {
+		int i = 0;
+		String sql = "delete from employee where id=?";
+
+		try (PreparedStatement ps1 = con.prepareStatement(sql);) {
+			ps1.setInt(1, id);
+			i = ps1.executeUpdate();
+		} catch (Exception ex) {
+			if (i == 0)
+				throw new Exception("Method deleteEmployee() failed");
+			System.out.println(ex);
+		}
+	}
+
+	public void deleteEmployeePersonal(Connection con, int id) throws Exception {
+		int i = 0;
+
+		String sql1 = "delete from employee_personal_details where eid=?";
+		try (PreparedStatement ps2 = con.prepareStatement(sql1);) {
+			ps2.setInt(1, id);
+			i = ps2.executeUpdate();
+
+		} catch (Exception ex) {
+			if (i == 0)
+				throw new Exception("Method deleteEmployeePersonal() failed");
+			System.out.println(ex);
+		}
+
+	}
 }
