@@ -1,5 +1,7 @@
 package com.Jerseyy;
+
 import java.util.List;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -22,7 +24,7 @@ public class EmployeeResource {
 	}
 
 	@GET
-	@Path("emp/{id}")
+	@Path("{id}")
 	@Produces(MediaType.APPLICATION_XML)
 	public Employee getOneEmployee(@PathParam("id") int id) {
 
@@ -31,7 +33,6 @@ public class EmployeeResource {
 	}
 
 	@POST
-	@Path("emp")
 	@Produces(MediaType.APPLICATION_XML)
 	@Consumes(MediaType.APPLICATION_XML)
 	public Employee createEmployee(Employee employee) {
@@ -40,7 +41,6 @@ public class EmployeeResource {
 	}
 
 	@PUT
-	@Path("emp")
 	@Produces(MediaType.APPLICATION_XML)
 	@Consumes(MediaType.APPLICATION_XML)
 	public Employee updateEmployee(Employee a1) {
@@ -49,7 +49,7 @@ public class EmployeeResource {
 	}
 
 	@DELETE
-	@Path("emp/{id}")
+	@Path("{id}")
 	@Produces(MediaType.TEXT_HTML)
 	public String delEmployee(@PathParam("id") int id) {
 		repo.delete(id);
