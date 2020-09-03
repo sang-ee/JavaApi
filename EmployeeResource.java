@@ -18,7 +18,7 @@ public class EmployeeResource {
 
 	@GET
 	@Produces(MediaType.APPLICATION_XML)
-	public List<Employee> getEmployees() {
+	public List<Employee> getEmployees() throws Exception {
 		return repo.getEmployeeList();
 
 	}
@@ -26,7 +26,7 @@ public class EmployeeResource {
 	@GET
 	@Path("{id}")
 	@Produces(MediaType.APPLICATION_XML)
-	public Employee getOneEmployee(@PathParam("id") int id) {
+	public Employee getOneEmployee(@PathParam("id") int id) throws Exception {
 
 		return repo.getEmployee(id);
 
@@ -35,7 +35,7 @@ public class EmployeeResource {
 	@POST
 	@Produces(MediaType.APPLICATION_XML)
 	@Consumes(MediaType.APPLICATION_XML)
-	public Employee createEmployee(Employee employee) {
+	public Employee createEmployee(Employee employee) throws Exception {
 		repo.insert(employee);
 		return employee;
 	}
@@ -43,7 +43,7 @@ public class EmployeeResource {
 	@PUT
 	@Produces(MediaType.APPLICATION_XML)
 	@Consumes(MediaType.APPLICATION_XML)
-	public Employee updateEmployee(Employee a1) {
+	public Employee updateEmployee(Employee a1) throws Exception {
 		repo.update(a1);
 		return a1;
 	}
@@ -51,7 +51,7 @@ public class EmployeeResource {
 	@DELETE
 	@Path("{id}")
 	@Produces(MediaType.TEXT_HTML)
-	public String delEmployee(@PathParam("id") int id) {
+	public String delEmployee(@PathParam("id") int id) throws Exception {
 		repo.delete(id);
 		String output = "<p>Deleted</p>";
 		return output;
